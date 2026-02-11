@@ -40,14 +40,17 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-
+  
+  fl_chart: ^0.66.0     # For the line chart in the dashboard 
+  percent_indicator: ^4.2.3 # For circular progress bars (e.g., "75% of target achieved") 
+   
   # UI Components
-  google_fonts: ^7.0.0        # For modern typography
+  google_fonts: ^6.1.0        # For modern typography
   phosphor_flutter: ^2.1.0    # Professional icons (better than default)
   
   # Navigation & State
   go_router: ^17.0.1          # Best for handling flows like Login -> Home
-  flutter_riverpod: ^3.1.0    # State management (Scalable)
+  flutter_riverpod: ^2.5.1    # State management (Scalable)
 
   # Maps & Location (For 50km radius feature)
 
@@ -55,6 +58,7 @@ dependencies:
   geolocator: ^10.1.0        # Gets GPS coordinates
   geocoding: ^2.1.0          # Converts coords to address (e.g., "Rajkot")
   google_maps_flutter: ^2.5.0 # For the visual map
+  
 
 dev_dependencies:
   flutter_test:
@@ -82,7 +86,8 @@ flutter:
   # assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
-
+  assets:
+    - assets/images/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
@@ -108,3 +113,6 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+
+# ... other dependencies above ...

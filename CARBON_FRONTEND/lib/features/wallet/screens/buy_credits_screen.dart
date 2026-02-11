@@ -1,111 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:carbon_credit_gem/features/auth/services/api_service.dart';
-import 'package:carbon_credit_gem/features/dashboard/widgets/success_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/app_providers.dart';
+import '../../../features/auth/services/api_service.dart';
+import '../../../core/widgets/success_screen.dart';
+import '../../../features/auth/screens/success_screen.dart';
 
-class BuyCreditsScreen extends StatefulWidget {
+
+// Change to ConsumerWidget (Stateless is fine now!)
+class BuyCreditsScreen extends ConsumerStatefulWidget {
   const BuyCreditsScreen({super.key});
 
   @override
-  State<BuyCreditsScreen> createState() => _BuyCreditsScreenState();
+  ConsumerState<BuyCreditsScreen> createState() =>
+      _BuyCreditsScreenState();
+}
+class _BuyCreditsScreenState
+    extends ConsumerState<BuyCreditsScreen> {
+final ApiService _apiService = ApiService();
+late Future<List<dynamic>> _listingsFuture;
+@override
+void initState() {
+  super.initState();
+  _listingsFuture = _apiService.getNearbySellers(
+    22.3039,
+    70.8022,
+  );
 }
 
-class _BuyCreditsScreenState extends State<BuyCreditsScreen> {
-  final ApiService _apiService = ApiService();
-  late Future<List<dynamic>> _listingsFuture;
 
-  @override
-  void initState() {
-    super.initState();
-    // Fetch sellers near Rajkot (Hardcoded lat/long for prototype test)
-    // In real app, pass the actual user location here
-    _listingsFuture = _apiService.getNearbySellers(22.3039, 70.8022);
-  }
+ @override
+Widget build(BuildContext context) {
+// Add WidgetRef ref
+    // 1. Fetch data using provider (Hardcoded Rajkot coords for now)
+    final listingsAsync = ref.watch(marketListingsProvider({'lat': 22.3039, 'long': 70.8022}));
 
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: const Text("Buy Credits"),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        titleTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      appBar: AppBar(title: const Text("Buy Credits"), backgroundColor: Colors.white, elevation: 0, foregroundColor: Colors.black),
       body: Column(
         children: [
-          // Filter Bar (Visual Only)
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search verified sellers...",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
+          // Filter Bar... (Keep existing code)
 
-          // REAL DATA LIST
+          // 2. Use Riverpod to handle the list
           Expanded(
-            child: FutureBuilder<List<dynamic>>(
-              future: _listingsFuture,
-              builder: (context, snapshot) {
-                // 1. Loading State
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                // 2. Error State
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red,
-                        ),
-                        const SizedBox(height: 10),
-                        Text("Error: ${snapshot.error}"),
-                        TextButton(
-                          onPressed: () => setState(() {
-                            _listingsFuture = _apiService.getNearbySellers(
-                              22.3039,
-                              70.8022,
-                            );
-                          }),
-                          child: const Text("Retry"),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                // 3. Empty State
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text("No sellers found nearby."));
-                }
-
-                // 4. Success State
-                final listings = snapshot.data!;
+            child: listingsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
+              data: (listings) {
+                if (listings.isEmpty) return const Center(child: Text("No sellers nearby."));
+                
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: listings.length,
-                  itemBuilder: (context, index) {
-                    final item = listings[index];
-                    return _buildListingCard(item);
-                  },
+                  itemBuilder: (context, index) => _buildListingCard(context, listings[index], ref),
                 );
               },
             ),
@@ -115,7 +62,8 @@ class _BuyCreditsScreenState extends State<BuyCreditsScreen> {
     );
   }
 
-  Widget _buildListingCard(dynamic item) {
+  // Update _buildListingCard to accept 'ref'
+  Widget _buildListingCard(BuildContext context, dynamic item, WidgetRef ref) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
